@@ -6,6 +6,7 @@ import Proof from "./sections/Proof/Proof"
 import Projects from "./sections/Projects/Projects"
 import Experience from "./sections/Experience/Experience"
 import CreativeIdentity from "./sections/CreativeIdentity/CreativeIdentity"
+import Experiments from "./sections/Experiments/Experiments"
 import Contact from "./sections/Contact/Contact"
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Projects />
       <Experience />
       <CreativeIdentity />
+      <Experiments />
       <Contact />
     </main>
   )
