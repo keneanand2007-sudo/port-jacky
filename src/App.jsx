@@ -2,6 +2,7 @@ import Hero from "./sections/Hero/Hero"
 import About from "./sections/About/About"
 import Skills from "./sections/Skills/Skills"
 import Education from "./sections/Education/Education"
+import Proof from "./sections/Proof/Proof"
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <About />
       <Skills />
       <Education />
+      <Proof />
     </main>
   )
 }
