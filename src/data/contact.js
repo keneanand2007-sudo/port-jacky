@@ -1,5 +1,5 @@
 export const contact = {
-  chapter: "CHAPTER 09",
+  chapter: "CHAPTER 10",
   eyebrow: "CONNECTION",
   lineOne: "WE'VE TRAVELED FAR ENOUGH.",
   lineTwo: "NOW LET'S BUILD SOMETHING.",

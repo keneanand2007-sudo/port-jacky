@@ -8,6 +8,8 @@ import Experience from "./sections/Experience/Experience"
 import CreativeIdentity from "./sections/CreativeIdentity/CreativeIdentity"
 import Experiments from "./sections/Experiments/Experiments"
 import Contact from "./sections/Contact/Contact"
+import DeepSpace from "./sections/DeepSpace/DeepSpace"
+import Footer from "./components/Footer/Footer"
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
       <CreativeIdentity />
       <Experiments />
       <Contact />
+      <DeepSpace />
+      <Footer />
     </main>
   )
 }
