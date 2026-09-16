@@ -1,3 +1,4 @@
+import SmoothScroll from "./experience/scroll/SmoothScroll"
 import Hero from "./sections/Hero/Hero"
 import About from "./sections/About/About"
 import Skills from "./sections/Skills/Skills"
@@ -13,20 +14,22 @@ import Footer from "./components/Footer/Footer"
 
 function App() {
   return (
-    <main>
-      <Hero />
-      <About />
-      <Skills />
-      <Education />
-      <Proof />
-      <Projects />
-      <Experience />
-      <CreativeIdentity />
-      <Experiments />
-      <Contact />
-      <DeepSpace />
-      <Footer />
-    </main>
+    <SmoothScroll>
+      <main>
+        <Hero />
+        <About />
+        <Skills />
+        <Education />
+        <Proof />
+        <Projects />
+        <Experience />
+        <CreativeIdentity />
+        <Experiments />
+        <Contact />
+        <DeepSpace />
+        <Footer />
+      </main>
+    </SmoothScroll>
   )
 }
 
