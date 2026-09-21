@@ -1,4 +1,5 @@
 import SmoothScroll from "./experience/scroll/SmoothScroll"
+import Galaxy from "./experience/galaxy/Galaxy"
 import Hero from "./sections/Hero/Hero"
 import About from "./sections/About/About"
 import Skills from "./sections/Skills/Skills"
@@ -15,6 +16,7 @@ import Footer from "./components/Footer/Footer"
 function App() {
   return (
     <SmoothScroll>
+      <Galaxy />
       <main>
         <Hero />
         <About />
