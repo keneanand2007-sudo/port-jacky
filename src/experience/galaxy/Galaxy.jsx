@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react"
 import { Canvas } from "@react-three/fiber"
 import StarField from "./StarField"
+import Sun from "./Sun"
 import { isWebGLAvailable } from "../../utils/webgl"
+import { useHeroScrollProgress } from "../../hooks/useScrollProgress"
 
 function Galaxy() {
   const [webglOk, setWebglOk] = useState(true)
   const [reduceMotion, setReduceMotion] = useState(false)
+  const scrollProgress = useHeroScrollProgress()
 
   useEffect(() => {
     setWebglOk(isWebGLAvailable())
@@ -23,11 +26,12 @@ function Galaxy() {
       aria-hidden="true"
     >
       <Canvas
-        camera={{ position: [0, 0, 30], fov: 60 }}
+        camera={{ position: [0, 0, 11], fov: 50 }}
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 1.5]}
       >
         <StarField reduceMotion={reduceMotion} />
+        <Sun scrollProgress={scrollProgress} reduceMotion={reduceMotion} />
       </Canvas>
     </div>
   )
