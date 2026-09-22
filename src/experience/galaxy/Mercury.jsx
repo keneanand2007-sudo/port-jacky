@@ -77,22 +77,22 @@ const noiseGLSL = `
   }
 `
 
-const sunVertexShader = `
+const mercuryVertexShader = `
   uniform float uTime;
   varying vec3 vPosition;
   varying vec3 vNormal;
-  varying float vDisplacement;
+  varying float vCrater;
 
   ${noiseGLSL}
 
   void main() {
-    vec3 p = normalize(position) * 2.0;
-    float displaceNoise = fbm(p * 1.8 + vec3(0.0, 0.0, uTime * 0.15));
-    float flares = pow(max(0.0, fbm(p * 3.0 - uTime * 0.1)), 2.0);
-    float displacement = displaceNoise * 0.18 + flares * 0.22;
+    vec3 p = normalize(position) * 3.5;
+    float largeForm = fbm(p);
+    float craterDetail = fbm(p * 6.0 + 10.0);
+    float craters = min(largeForm, craterDetail * 0.6);
 
-    vDisplacement = displacement;
-    vec3 displaced = position + normal * displacement;
+    vCrater = craters;
+    vec3 displaced = position + normal * craters * 0.12;
 
     vPosition = displaced;
     vNormal = normalize(normalMatrix * normal);
@@ -100,37 +100,35 @@ const sunVertexShader = `
   }
 `
 
-const sunFragmentShader = `
+const mercuryFragmentShader = `
   uniform float uTime;
   varying vec3 vPosition;
   varying vec3 vNormal;
-  varying float vDisplacement;
+  varying float vCrater;
 
   ${noiseGLSL}
 
   void main() {
-    vec3 p = normalize(vPosition) * 2.2;
-    float n1 = fbm(p + vec3(0.0, 0.0, uTime * 0.06));
-    float n2 = fbm(p * 2.0 - vec3(0.0, uTime * 0.03, 0.0));
-    float turbulence = n1 * 0.6 + n2 * 0.4 + vDisplacement * 0.8;
+    vec3 p = normalize(vPosition) * 3.0;
+    float n = fbm(p * 2.5);
 
-    vec3 deepRed = vec3(0.55, 0.05, 0.0);
-    vec3 orange = vec3(1.0, 0.45, 0.05);
-    vec3 yellow = vec3(1.0, 0.85, 0.35);
-    vec3 hot = vec3(1.0, 0.98, 0.85);
+    vec3 navy = vec3(0.08, 0.10, 0.20);
+    vec3 slate = vec3(0.22, 0.27, 0.42);
+    vec3 copper = vec3(0.72, 0.45, 0.22);
+    vec3 highlight = vec3(0.92, 0.78, 0.58);
 
-    vec3 color = mix(deepRed, orange, smoothstep(-0.3, 0.3, turbulence));
-    color = mix(color, yellow, smoothstep(0.15, 0.55, turbulence));
-    color = mix(color, hot, smoothstep(0.55, 0.9, turbulence));
+    vec3 color = mix(navy, slate, smoothstep(-0.2, 0.3, n));
+    color = mix(color, copper, smoothstep(0.15, 0.5, vCrater + n * 0.3));
+    color = mix(color, highlight, smoothstep(0.45, 0.7, vCrater));
 
-    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
-    color += fresnel * vec3(1.0, 0.6, 0.2) * 0.9;
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
+    color += fresnel * vec3(0.3, 0.4, 0.6) * 0.6;
 
     gl_FragColor = vec4(color, 1.0);
   }
 `
 
-const glowVertexShader = `
+const rimVertexShader = `
   varying vec3 vNormal;
   void main() {
     vNormal = normalize(normalMatrix * normal);
@@ -138,102 +136,81 @@ const glowVertexShader = `
   }
 `
 
-const glowFragmentShader = `
+const rimFragmentShader = `
   uniform float uOpacity;
-  uniform vec3 uColor;
-  uniform float uPower;
   varying vec3 vNormal;
   void main() {
-    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), uPower);
-    gl_FragColor = vec4(uColor, fresnel * uOpacity);
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
+    vec3 rimColor = vec3(0.45, 0.55, 0.85);
+    gl_FragColor = vec4(rimColor, fresnel * uOpacity);
   }
 `
 
-function GlowShell({ scale, color, power, baseOpacity, fadeRef }) {
-  const ref = useRef(null)
-  const uniforms = useMemo(
-    () => ({
-      uOpacity: { value: baseOpacity },
-      uColor: { value: new THREE.Color(color) },
-      uPower: { value: power },
-    }),
-    [color, power, baseOpacity]
-  )
-
-  useFrame(() => {
-    if (!ref.current) return
-    uniforms.uOpacity.value = baseOpacity * fadeRef.current
-  })
-
-  return (
-    <mesh ref={ref} scale={scale}>
-      <sphereGeometry args={[3.2, 48, 48]} />
-      <shaderMaterial
-        uniforms={uniforms}
-        vertexShader={glowVertexShader}
-        fragmentShader={glowFragmentShader}
-        transparent
-        side={THREE.BackSide}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </mesh>
-  )
-}
-
-function Sun({ scrollProgress, reduceMotion }) {
+function Mercury({ progress, reduceMotion }) {
   const coreRef = useRef(null)
+  const rimRef = useRef(null)
   const groupRef = useRef(null)
-  const fadeRef = useRef(1)
 
   const coreUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
+  const rimUniforms = useMemo(() => ({ uOpacity: { value: 0.7 } }), [])
 
-  const startX = 5.5
-  const startZ = -7
-  const exitX = -18
-  const exitZ = -20
+  const startX = 9
+  const startZ = -8
+  const exitX = -14
+  const exitZ = -18
 
   useFrame((state, delta) => {
-    if (!coreRef.current || !groupRef.current) return
+    if (!coreRef.current || !groupRef.current || !rimRef.current) return
 
     if (!reduceMotion) {
       coreUniforms.uTime.value += delta
-      groupRef.current.rotation.y += delta * 0.02
+      groupRef.current.rotation.y += delta * 0.03
     }
 
-    const t = Math.min(1, scrollProgress * 1.15)
+    const t = Math.min(1, Math.max(0, progress))
     const eased = t * t * (3 - 2 * t)
 
     groupRef.current.position.x = THREE.MathUtils.lerp(startX, exitX, eased)
     groupRef.current.position.z = THREE.MathUtils.lerp(startZ, exitZ, eased)
 
-    const fade = Math.max(0, 1 - t * 1.6)
-    fadeRef.current = fade
-    coreRef.current.material.opacity = fade
+    // Fade fully in by 20% into this chapter's window, fully out by 80%.
+    const fadeIn = Math.min(1, t / 0.2)
+    const fadeOut = Math.max(0, 1 - Math.max(0, t - 0.8) / 0.2)
+    const fade = Math.min(fadeIn, fadeOut)
 
-    const scale = THREE.MathUtils.lerp(1, 0.5, eased)
+    coreRef.current.material.opacity = fade
+    rimUniforms.uOpacity.value = fade * 0.7
+
+    const scale = THREE.MathUtils.lerp(1, 0.75, eased)
     groupRef.current.scale.setScalar(scale)
   })
 
   return (
-    <group ref={groupRef} position={[startX, 0.5, startZ]}>
+    <group ref={groupRef} position={[startX, -0.3, startZ]}>
       <mesh ref={coreRef}>
-        <sphereGeometry args={[3.2, 96, 96]} />
+        <sphereGeometry args={[3.4, 96, 96]} />
         <shaderMaterial
           uniforms={coreUniforms}
-          vertexShader={sunVertexShader}
-          fragmentShader={sunFragmentShader}
+          vertexShader={mercuryVertexShader}
+          fragmentShader={mercuryFragmentShader}
           transparent
         />
       </mesh>
-
-      <GlowShell scale={1.15} color="#FFDBA3" power={1.5} baseOpacity={0.9} fadeRef={fadeRef} />
-      <GlowShell scale={1.45} color="#FF8A3D" power={2.2} baseOpacity={0.6} fadeRef={fadeRef} />
-      <GlowShell scale={1.9} color="#B8290A" power={3.0} baseOpacity={0.35} fadeRef={fadeRef} />
-
-      <pointLight color="#FFA35C" intensity={3} distance={35} />
+      <mesh ref={rimRef} scale={1.1}>
+        <sphereGeometry args={[3.4, 48, 48]} />
+        <shaderMaterial
+          uniforms={rimUniforms}
+          vertexShader={rimVertexShader}
+          fragmentShader={rimFragmentShader}
+          transparent
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      <pointLight color="#8FA3D9" intensity={1.2} distance={22} />
     </group>
   )
 }
 
-export default Sun
+export default Mercury

@@ -9,7 +9,7 @@ function About() {
   return (
     <section
       ref={containerRef}
-      className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-24"
+      id="about-section" className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-24"
     >
       <p className="reveal font-body text-xs tracking-widest uppercase text-text-secondary">
         {about.chapter} — {about.eyebrow}

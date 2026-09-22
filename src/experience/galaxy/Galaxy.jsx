@@ -2,13 +2,15 @@ import { useState, useEffect } from "react"
 import { Canvas } from "@react-three/fiber"
 import StarField from "./StarField"
 import Sun from "./Sun"
+import Mercury from "./Mercury"
 import { isWebGLAvailable } from "../../utils/webgl"
-import { useHeroScrollProgress } from "../../hooks/useScrollProgress"
+import { useChapterProgress } from "../../hooks/useScrollProgress"
 
 function Galaxy() {
   const [webglOk, setWebglOk] = useState(true)
   const [reduceMotion, setReduceMotion] = useState(false)
-  const scrollProgress = useHeroScrollProgress()
+  const sunProgress = useChapterProgress(0)
+  const mercuryProgress = useChapterProgress(1)
 
   useEffect(() => {
     setWebglOk(isWebGLAvailable())
@@ -31,7 +33,8 @@ function Galaxy() {
         dpr={[1, 1.5]}
       >
         <StarField reduceMotion={reduceMotion} />
-        <Sun scrollProgress={scrollProgress} reduceMotion={reduceMotion} />
+        <Sun scrollProgress={sunProgress} reduceMotion={reduceMotion} />
+        <Mercury progress={mercuryProgress} reduceMotion={reduceMotion} />
       </Canvas>
     </div>
   )
