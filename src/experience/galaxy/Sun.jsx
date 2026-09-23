@@ -102,6 +102,7 @@ const sunVertexShader = `
 
 const sunFragmentShader = `
   uniform float uTime;
+  uniform float uOpacity;
   varying vec3 vPosition;
   varying vec3 vNormal;
   varying float vDisplacement;
@@ -126,7 +127,7 @@ const sunFragmentShader = `
     float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.5);
     color += fresnel * vec3(1.0, 0.6, 0.2) * 0.9;
 
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, uOpacity);
   }
 `
 
@@ -167,7 +168,7 @@ function GlowShell({ scale, color, power, baseOpacity, fadeRef }) {
 
   return (
     <mesh ref={ref} scale={scale}>
-      <sphereGeometry args={[3.2, 48, 48]} />
+      <sphereGeometry args={[4.2, 48, 48]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={glowVertexShader}
@@ -186,12 +187,12 @@ function Sun({ scrollProgress, reduceMotion }) {
   const groupRef = useRef(null)
   const fadeRef = useRef(1)
 
-  const coreUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
+  const coreUniforms = useMemo(() => ({ uTime: { value: 0 }, uOpacity: { value: 1 } }), [])
 
-  const startX = 5.5
-  const startZ = -7
-  const exitX = -18
-  const exitZ = -20
+  const startX = 14
+  const startZ = -8
+  const exitX = -30
+  const exitZ = -26
 
   useFrame((state, delta) => {
     if (!coreRef.current || !groupRef.current) return
@@ -207,9 +208,11 @@ function Sun({ scrollProgress, reduceMotion }) {
     groupRef.current.position.x = THREE.MathUtils.lerp(startX, exitX, eased)
     groupRef.current.position.z = THREE.MathUtils.lerp(startZ, exitZ, eased)
 
-    const fade = Math.max(0, 1 - t * 1.6)
+    const fadeIn = Math.min(1, t / 0.15)
+    const fadeOut = Math.max(0, 1 - Math.max(0, t - 0.75) / 0.25)
+    const fade = Math.min(fadeIn, fadeOut)
     fadeRef.current = fade
-    coreRef.current.material.opacity = fade
+    coreUniforms.uOpacity.value = fade
 
     const scale = THREE.MathUtils.lerp(1, 0.5, eased)
     groupRef.current.scale.setScalar(scale)
@@ -218,7 +221,7 @@ function Sun({ scrollProgress, reduceMotion }) {
   return (
     <group ref={groupRef} position={[startX, 0.5, startZ]}>
       <mesh ref={coreRef}>
-        <sphereGeometry args={[3.2, 96, 96]} />
+        <sphereGeometry args={[4.2, 96, 96]} />
         <shaderMaterial
           uniforms={coreUniforms}
           vertexShader={sunVertexShader}
@@ -231,7 +234,7 @@ function Sun({ scrollProgress, reduceMotion }) {
       <GlowShell scale={1.45} color="#FF8A3D" power={2.2} baseOpacity={0.6} fadeRef={fadeRef} />
       <GlowShell scale={1.9} color="#B8290A" power={3.0} baseOpacity={0.35} fadeRef={fadeRef} />
 
-      <pointLight color="#FFA35C" intensity={3} distance={35} />
+      <pointLight color="#FFA35C" intensity={3} distance={40} />
     </group>
   )
 }

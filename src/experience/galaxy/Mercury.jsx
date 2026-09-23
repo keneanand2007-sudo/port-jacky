@@ -102,6 +102,7 @@ const mercuryVertexShader = `
 
 const mercuryFragmentShader = `
   uniform float uTime;
+  uniform float uOpacity;
   varying vec3 vPosition;
   varying vec3 vNormal;
   varying float vCrater;
@@ -124,7 +125,7 @@ const mercuryFragmentShader = `
     float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
     color += fresnel * vec3(0.3, 0.4, 0.6) * 0.6;
 
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, uOpacity);
   }
 `
 
@@ -148,19 +149,21 @@ const rimFragmentShader = `
 
 function Mercury({ progress, reduceMotion }) {
   const coreRef = useRef(null)
-  const rimRef = useRef(null)
   const groupRef = useRef(null)
 
-  const coreUniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
-  const rimUniforms = useMemo(() => ({ uOpacity: { value: 0.7 } }), [])
+  const coreUniforms = useMemo(
+    () => ({ uTime: { value: 0 }, uOpacity: { value: 0 } }),
+    []
+  )
+  const rimUniforms = useMemo(() => ({ uOpacity: { value: 0 } }), [])
 
-  const startX = 9
-  const startZ = -8
-  const exitX = -14
-  const exitZ = -18
+  const startX = 16
+  const startZ = -9
+  const exitX = -18
+  const exitZ = -20
 
   useFrame((state, delta) => {
-    if (!coreRef.current || !groupRef.current || !rimRef.current) return
+    if (!coreRef.current || !groupRef.current) return
 
     if (!reduceMotion) {
       coreUniforms.uTime.value += delta
@@ -173,12 +176,13 @@ function Mercury({ progress, reduceMotion }) {
     groupRef.current.position.x = THREE.MathUtils.lerp(startX, exitX, eased)
     groupRef.current.position.z = THREE.MathUtils.lerp(startZ, exitZ, eased)
 
-    // Fade fully in by 20% into this chapter's window, fully out by 80%.
-    const fadeIn = Math.min(1, t / 0.2)
+    // Invisible until this chapter starts, fully visible in the
+    // middle, invisible again before the chapter ends.
+    const fadeIn = Math.min(1, t / 0.15)
     const fadeOut = Math.max(0, 1 - Math.max(0, t - 0.8) / 0.2)
     const fade = Math.min(fadeIn, fadeOut)
 
-    coreRef.current.material.opacity = fade
+    coreUniforms.uOpacity.value = fade
     rimUniforms.uOpacity.value = fade * 0.7
 
     const scale = THREE.MathUtils.lerp(1, 0.75, eased)
@@ -196,7 +200,7 @@ function Mercury({ progress, reduceMotion }) {
           transparent
         />
       </mesh>
-      <mesh ref={rimRef} scale={1.1}>
+      <mesh scale={1.1}>
         <sphereGeometry args={[3.4, 48, 48]} />
         <shaderMaterial
           uniforms={rimUniforms}

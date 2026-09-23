@@ -10,7 +10,7 @@ function Hero() {
   }
 
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center text-center px-6">
+    <section id="hero-section" className="min-h-screen flex flex-col items-center justify-center text-center px-6">
       <motion.h1
         variants={fadeUp}
         initial="hidden"

@@ -4,13 +4,13 @@ import StarField from "./StarField"
 import Sun from "./Sun"
 import Mercury from "./Mercury"
 import { isWebGLAvailable } from "../../utils/webgl"
-import { useChapterProgress } from "../../hooks/useScrollProgress"
+import { useSectionProgress } from "../../hooks/useScrollProgress"
 
 function Galaxy() {
   const [webglOk, setWebglOk] = useState(true)
   const [reduceMotion, setReduceMotion] = useState(false)
-  const sunProgress = useChapterProgress(0)
-  const mercuryProgress = useChapterProgress(1)
+  const sunProgress = useSectionProgress("hero-section")
+  const mercuryProgress = useSectionProgress("about-section")
 
   useEffect(() => {
     setWebglOk(isWebGLAvailable())

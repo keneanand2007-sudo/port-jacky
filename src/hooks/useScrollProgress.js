@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react"
 
-// Clean, non-overlapping scroll "chapter" windows.
-// Chapter N covers scrollY range [N * viewportHeight, (N+1) * viewportHeight].
-// Returns 0 before the window starts, 0→1 across the window, 1 after it ends.
-export function useChapterProgress(chapterIndex) {
+// Tracks a section's real scroll position: 0 = not yet reached (below
+// viewport), rises 0→1 as it scrolls through, 1 = fully scrolled past
+// (top of section has gone above the top of the viewport).
+export function useSectionProgress(elementId) {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     function handleScroll() {
+      const el = document.getElementById(elementId)
+      if (!el) return
+
+      const rect = el.getBoundingClientRect()
       const vh = window.innerHeight
-      const start = chapterIndex * vh
-      const scrolled = window.scrollY - start
-      const value = Math.min(1, Math.max(0, scrolled / vh))
+      const span = vh + rect.height
+
+      const value = Math.min(1, Math.max(0, (vh - rect.top) / span))
       setProgress(value)
     }
 
@@ -22,7 +26,7 @@ export function useChapterProgress(chapterIndex) {
       window.removeEventListener("scroll", handleScroll)
       window.removeEventListener("resize", handleScroll)
     }
-  }, [chapterIndex])
+  }, [elementId])
 
   return progress
 }
