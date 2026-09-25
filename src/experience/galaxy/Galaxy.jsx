@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react"
 import { Canvas } from "@react-three/fiber"
 import StarField from "./StarField"
-import Sun from "./Sun"
-import Mercury from "./Mercury"
+import Planet from "./Planet"
 import { isWebGLAvailable } from "../../utils/webgl"
-import { useSectionProgress } from "../../hooks/useScrollProgress"
 
 function Galaxy() {
   const [webglOk, setWebglOk] = useState(true)
   const [reduceMotion, setReduceMotion] = useState(false)
-  const sunProgress = useSectionProgress("hero-section")
-  const mercuryProgress = useSectionProgress("about-section")
 
   useEffect(() => {
     setWebglOk(isWebGLAvailable())
@@ -22,19 +18,39 @@ function Galaxy() {
   if (!webglOk) return null
 
   return (
-    <div
-      className="fixed inset-0"
-      style={{ zIndex: -1 }}
-      aria-hidden="true"
-    >
+    <div className="fixed inset-0" style={{ zIndex: -1 }} aria-hidden="true">
       <Canvas
         camera={{ position: [0, 0, 11], fov: 50 }}
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 1.5]}
       >
         <StarField reduceMotion={reduceMotion} />
-        <Sun scrollProgress={sunProgress} reduceMotion={reduceMotion} />
-        <Mercury progress={mercuryProgress} reduceMotion={reduceMotion} />
+
+        <Planet
+          sectionId="hero-section"
+          variant="sun"
+          radius={2.4}
+          startX={10}
+          startY={0.5}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#FFB067"
+          reduceMotion={reduceMotion}
+        />
+
+        <Planet
+          sectionId="about-section"
+          variant="rocky"
+          radius={2.0}
+          startX={10}
+          startY={-0.3}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#9AAEDD"
+          reduceMotion={reduceMotion}
+        />
       </Canvas>
     </div>
   )
