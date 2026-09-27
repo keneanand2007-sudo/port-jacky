@@ -241,3 +241,61 @@ export const venusFragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `
+
+export const earthVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+  varying float vLand;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(position) * 2.8;
+    float continents = fbm(p * 1.6);
+    vLand = continents;
+    vec3 displaced = position + normal * max(0.0, continents) * 0.04;
+
+    vPosition = displaced;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
+  }
+`
+
+export const earthFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+  varying float vLand;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition) * 1.6;
+    float shape = fbm(p);
+    float detail = fbm(p * 5.0 + 3.0) * 0.15;
+    float landmass = shape + detail;
+
+    vec3 deepOcean = vec3(0.02, 0.10, 0.30);
+    vec3 shallowOcean = vec3(0.05, 0.32, 0.58);
+    vec3 coast = vec3(0.55, 0.52, 0.32);
+    vec3 lowland = vec3(0.16, 0.42, 0.18);
+    vec3 highland = vec3(0.45, 0.38, 0.22);
+
+    vec3 color = mix(deepOcean, shallowOcean, smoothstep(-0.6, 0.05, landmass));
+    color = mix(color, coast, smoothstep(0.03, 0.09, landmass));
+    color = mix(color, lowland, smoothstep(0.08, 0.25, landmass));
+    color = mix(color, highland, smoothstep(0.3, 0.55, landmass));
+
+    vec3 cloudP = normalize(vPosition) * 2.4;
+    float clouds = fbm(cloudP * 1.8 + vec3(uTime * 0.025, uTime * 0.01, 0.0));
+    float cloudMask = smoothstep(0.35, 0.65, clouds);
+    color = mix(color, vec3(0.97, 0.98, 1.0), cloudMask * 0.65);
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+    color += fresnel * vec3(0.15, 0.35, 0.6) * 0.7;
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`

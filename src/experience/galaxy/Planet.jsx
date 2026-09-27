@@ -8,19 +8,23 @@ import {
   rockyFragmentShader,
   venusVertexShader,
   venusFragmentShader,
+  earthVertexShader,
+  earthFragmentShader,
   glowVertexShader,
   glowFragmentShader,
 } from "./planetShaders"
 
-function getChapterProgress(sectionId) {
+// Returns the RAW (unclamped) progress: negative before the chapter
+// starts, 0..1 during it, >1 after it ends. This lets us tell "hasn't
+// arrived yet" (raw < 0) apart from "just arrived" (raw = 0), which a
+// clamped value cannot distinguish.
+function getRawChapterProgress(sectionId) {
   const el = document.getElementById(sectionId)
-  if (!el) return 0
+  if (!el) return -1
 
   const vh = window.innerHeight
   const sectionTop = el.offsetTop
-  const t = (window.scrollY - sectionTop) / vh
-
-  return Math.min(1, Math.max(0, t))
+  return (window.scrollY - sectionTop) / vh
 }
 
 function Planet({
@@ -55,32 +59,43 @@ function Planet({
       ? sunVertexShader
       : variant === "venus"
       ? venusVertexShader
+      : variant === "earth"
+      ? earthVertexShader
       : rockyVertexShader
   const fragmentShader =
     variant === "sun"
       ? sunFragmentShader
       : variant === "venus"
       ? venusFragmentShader
+      : variant === "earth"
+      ? earthFragmentShader
       : rockyFragmentShader
   const lightColor = variant === "sun" ? "#FFA35C" : "#9AAEDD"
 
   useFrame((state, delta) => {
     if (!coreRef.current || !groupRef.current) return
 
+    const raw = getRawChapterProgress(sectionId)
+
+    // Completely hidden before the chapter starts or well after it ends.
+    const isActive = raw > -0.05 && raw < 1.05
+    groupRef.current.visible = isActive
+
+    if (!isActive) return
+
     if (!reduceMotion) {
       coreUniforms.uTime.value += delta
       groupRef.current.rotation.y += delta * 0.03
     }
 
-    const t = getChapterProgress(sectionId)
+    const t = Math.min(1, Math.max(0, raw))
     const eased = t * t * (3 - 2 * t)
 
     groupRef.current.position.x = THREE.MathUtils.lerp(startX, exitX, eased)
     groupRef.current.position.z = THREE.MathUtils.lerp(startZ, exitZ, eased)
 
-    // Fully visible the instant this chapter starts (t=0).
-    // Only fades out as the chapter's scroll window ends.
-    const fade = Math.max(0, 1 - Math.max(0, t - 0.55) / 0.35)
+    // Fully visible from chapter start, fades out in the final third.
+    const fade = Math.max(0, 1 - Math.max(0, t - 0.65) / 0.35)
 
     coreUniforms.uOpacity.value = fade
     glowUniforms.uOpacity.value = fade * 0.55
@@ -90,7 +105,7 @@ function Planet({
   })
 
   return (
-    <group ref={groupRef} position={[startX, startY, startZ]}>
+    <group ref={groupRef} position={[startX, startY, startZ]} visible={false}>
       <mesh ref={coreRef}>
         <sphereGeometry args={[radius, 96, 96]} />
         <shaderMaterial

@@ -29,8 +29,8 @@ function Galaxy() {
         <Planet
           sectionId="hero-section"
           variant="sun"
-          radius={2.4}
-          startX={10}
+          radius={3.2}
+          startX={12}
           startY={0.5}
           startZ={-6}
           exitX={-14}
@@ -62,6 +62,19 @@ function Galaxy() {
           exitX={-14}
           exitZ={-14}
           glowColor="#E8B458"
+          reduceMotion={reduceMotion}
+        />
+
+        <Planet
+          sectionId="education-section"
+          variant="earth"
+          radius={2.2}
+          startX={10}
+          startY={0}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#5B9BD5"
           reduceMotion={reduceMotion}
         />
       </Canvas>
