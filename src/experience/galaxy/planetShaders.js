@@ -193,3 +193,51 @@ export const glowFragmentShader = `
     gl_FragColor = vec4(uColor, fresnel * uOpacity);
   }
 `
+
+export const venusVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(position) * 2.5;
+    float swirl = fbm(p * 1.5 + vec3(uTime * 0.04, 0.0, uTime * 0.03));
+    vec3 displaced = position + normal * swirl * 0.05;
+
+    vPosition = displaced;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
+  }
+`
+
+export const venusFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition) * 2.2;
+    float n1 = fbm(p * 1.8 + vec3(uTime * 0.05, 0.0, 0.0));
+    float n2 = fbm(p * 3.5 - vec3(0.0, uTime * 0.03, 0.0));
+    float clouds = n1 * 0.65 + n2 * 0.35;
+
+    vec3 deepGold = vec3(0.55, 0.38, 0.12);
+    vec3 amber = vec3(0.85, 0.62, 0.25);
+    vec3 cream = vec3(0.96, 0.85, 0.62);
+    vec3 pale = vec3(1.0, 0.96, 0.85);
+
+    vec3 color = mix(deepGold, amber, smoothstep(-0.2, 0.3, clouds));
+    color = mix(color, cream, smoothstep(0.2, 0.6, clouds));
+    color = mix(color, pale, smoothstep(0.55, 0.85, clouds));
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 1.6);
+    color += fresnel * vec3(0.4, 0.3, 0.12);
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`

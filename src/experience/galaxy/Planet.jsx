@@ -6,6 +6,8 @@ import {
   sunFragmentShader,
   rockyVertexShader,
   rockyFragmentShader,
+  venusVertexShader,
+  venusFragmentShader,
   glowVertexShader,
   glowFragmentShader,
 } from "./planetShaders"
@@ -48,9 +50,18 @@ function Planet({
     [glowColor]
   )
 
-  const vertexShader = variant === "sun" ? sunVertexShader : rockyVertexShader
+  const vertexShader =
+    variant === "sun"
+      ? sunVertexShader
+      : variant === "venus"
+      ? venusVertexShader
+      : rockyVertexShader
   const fragmentShader =
-    variant === "sun" ? sunFragmentShader : rockyFragmentShader
+    variant === "sun"
+      ? sunFragmentShader
+      : variant === "venus"
+      ? venusFragmentShader
+      : rockyFragmentShader
   const lightColor = variant === "sun" ? "#FFA35C" : "#9AAEDD"
 
   useFrame((state, delta) => {

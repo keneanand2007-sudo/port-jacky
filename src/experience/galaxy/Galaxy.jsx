@@ -51,6 +51,19 @@ function Galaxy() {
           glowColor="#9AAEDD"
           reduceMotion={reduceMotion}
         />
+
+        <Planet
+          sectionId="skills-section"
+          variant="venus"
+          radius={2.2}
+          startX={10}
+          startY={0.2}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#E8B458"
+          reduceMotion={reduceMotion}
+        />
       </Canvas>
     </div>
   )
