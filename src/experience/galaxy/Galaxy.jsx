@@ -77,6 +77,19 @@ function Galaxy() {
           glowColor="#5B9BD5"
           reduceMotion={reduceMotion}
         />
+
+        <Planet
+          sectionId="proof-section"
+          variant="mars"
+          radius={2.0}
+          startX={10}
+          startY={-0.2}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#D9682F"
+          reduceMotion={reduceMotion}
+        />
       </Canvas>
     </div>
   )

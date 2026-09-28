@@ -10,6 +10,8 @@ import {
   venusFragmentShader,
   earthVertexShader,
   earthFragmentShader,
+  marsVertexShader,
+  marsFragmentShader,
   glowVertexShader,
   glowFragmentShader,
 } from "./planetShaders"
@@ -61,6 +63,8 @@ function Planet({
       ? venusVertexShader
       : variant === "earth"
       ? earthVertexShader
+      : variant === "mars"
+      ? marsVertexShader
       : rockyVertexShader
   const fragmentShader =
     variant === "sun"
@@ -69,6 +73,8 @@ function Planet({
       ? venusFragmentShader
       : variant === "earth"
       ? earthFragmentShader
+      : variant === "mars"
+      ? marsFragmentShader
       : rockyFragmentShader
   const lightColor = variant === "sun" ? "#FFA35C" : "#9AAEDD"
 

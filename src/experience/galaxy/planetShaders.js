@@ -299,3 +299,55 @@ export const earthFragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `
+export const marsVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+  varying float vCrater;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(position) * 3.2;
+    float largeForm = fbm(p * 1.4);
+    float craterDetail = fbm(p * 7.0 + 20.0);
+    float craters = min(largeForm, craterDetail * 0.5);
+
+    vCrater = craters;
+    vec3 displaced = position + normal * craters * 0.09;
+
+    vPosition = displaced;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
+  }
+`
+
+export const marsFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+  varying float vCrater;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition) * 2.6;
+    float n = fbm(p * 1.8);
+    float dust = fbm(p * 4.5 + 8.0);
+
+    vec3 darkRust = vec3(0.28, 0.10, 0.05);
+    vec3 rust = vec3(0.55, 0.22, 0.10);
+    vec3 orange = vec3(0.75, 0.38, 0.18);
+    vec3 dustyTan = vec3(0.85, 0.55, 0.32);
+
+    vec3 color = mix(darkRust, rust, smoothstep(-0.3, 0.2, n));
+    color = mix(color, orange, smoothstep(0.1, 0.4, vCrater + dust * 0.25));
+    color = mix(color, dustyTan, smoothstep(0.35, 0.6, vCrater));
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 1.8);
+    color += fresnel * vec3(0.4, 0.18, 0.08);
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`
