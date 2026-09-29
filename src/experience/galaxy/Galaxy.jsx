@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Canvas } from "@react-three/fiber"
 import StarField from "./StarField"
 import Planet from "./Planet"
+import AsteroidField from "./AsteroidField"
 import { isWebGLAvailable } from "../../utils/webgl"
 
 function Galaxy() {
@@ -88,6 +89,16 @@ function Galaxy() {
           exitX={-14}
           exitZ={-14}
           glowColor="#D9682F"
+          reduceMotion={reduceMotion}
+        />
+
+        <AsteroidField
+          sectionId="projects-section"
+          count={26}
+          startX={14}
+          startZ={-6}
+          exitX={-16}
+          exitZ={-14}
           reduceMotion={reduceMotion}
         />
       </Canvas>

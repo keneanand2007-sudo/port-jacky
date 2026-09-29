@@ -7,7 +7,7 @@ function Projects() {
   useScrollReveal(containerRef)
 
   return (
-    <section
+    <section id="projects-section"
       ref={containerRef}
       className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-24"
     >
