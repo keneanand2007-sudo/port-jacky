@@ -351,3 +351,52 @@ export const marsFragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `
+export const jupiterVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  void main() {
+    vPosition = position;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+export const jupiterFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition);
+
+    float latitude = p.y;
+    float bandNoise = fbm(vec3(p.x * 2.0, latitude * 6.0 + uTime * 0.02, p.z * 2.0));
+    float bands = sin(latitude * 14.0 + bandNoise * 1.5);
+
+    vec3 cream = vec3(0.85, 0.72, 0.55);
+    vec3 tan = vec3(0.68, 0.52, 0.36);
+    vec3 rust = vec3(0.58, 0.34, 0.22);
+    vec3 pale = vec3(0.92, 0.85, 0.72);
+
+    vec3 color = mix(tan, cream, smoothstep(-0.3, 0.3, bands));
+    color = mix(color, rust, smoothstep(0.35, 0.7, bands));
+    color = mix(color, pale, smoothstep(-0.9, -0.6, bands));
+
+    vec2 spotCenter = vec2(0.35, -0.15);
+    vec2 posXY = vec2(p.x, latitude);
+    float spotDist = length((posXY - spotCenter) * vec2(1.0, 2.2));
+    float spot = smoothstep(0.22, 0.1, spotDist);
+    vec3 spotColor = vec3(0.55, 0.22, 0.14);
+    color = mix(color, spotColor, spot);
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+    color += fresnel * vec3(0.25, 0.18, 0.1) * 0.6;
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`

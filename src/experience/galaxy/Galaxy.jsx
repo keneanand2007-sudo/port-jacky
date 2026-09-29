@@ -101,6 +101,19 @@ function Galaxy() {
           exitZ={-14}
           reduceMotion={reduceMotion}
         />
+
+        <Planet
+          sectionId="experience-section"
+          variant="jupiter"
+          radius={3.6}
+          startX={13}
+          startY={0.3}
+          startZ={-8}
+          exitX={-18}
+          exitZ={-16}
+          glowColor="#C9A876"
+          reduceMotion={reduceMotion}
+        />
       </Canvas>
     </div>
   )
