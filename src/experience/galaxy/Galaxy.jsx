@@ -127,6 +127,20 @@ function Galaxy() {
           glowColor="#E8D2A0"
           reduceMotion={reduceMotion}
         />
+
+        <Planet
+          sectionId="experiments-section"
+          variant="uranus"
+          radius={2.1}
+          startX={10}
+          startY={0}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#7ECBD4"
+          axialTilt={1.7}
+          reduceMotion={reduceMotion}
+        />
       </Canvas>
     </div>
   )

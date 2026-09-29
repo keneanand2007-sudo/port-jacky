@@ -14,6 +14,8 @@ import {
   marsFragmentShader,
   jupiterVertexShader,
   jupiterFragmentShader,
+  uranusVertexShader,
+  uranusFragmentShader,
   glowVertexShader,
   glowFragmentShader,
 } from "./planetShaders"
@@ -41,6 +43,7 @@ function Planet({
   exitX = -14,
   exitZ = -14,
   glowColor = "#FFB067",
+  axialTilt = 0,
   reduceMotion,
 }) {
   const coreRef = useRef(null)
@@ -69,6 +72,8 @@ function Planet({
       ? marsVertexShader
       : variant === "jupiter"
       ? jupiterVertexShader
+      : variant === "uranus"
+      ? uranusVertexShader
       : rockyVertexShader
   const fragmentShader =
     variant === "sun"
@@ -81,6 +86,8 @@ function Planet({
       ? marsFragmentShader
       : variant === "jupiter"
       ? jupiterFragmentShader
+      : variant === "uranus"
+      ? uranusFragmentShader
       : rockyFragmentShader
   const lightColor = variant === "sun" ? "#FFA35C" : "#9AAEDD"
 
@@ -117,7 +124,7 @@ function Planet({
   })
 
   return (
-    <group ref={groupRef} position={[startX, startY, startZ]} visible={false}>
+    <group ref={groupRef} position={[startX, startY, startZ]} rotation={[0, 0, axialTilt]} visible={false}>
       <mesh ref={coreRef}>
         <sphereGeometry args={[radius, 96, 96]} />
         <shaderMaterial

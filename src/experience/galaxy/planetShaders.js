@@ -456,3 +456,43 @@ export const saturnFragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `
+export const uranusVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  void main() {
+    vPosition = position;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+export const uranusFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition);
+    float latitude = p.y;
+
+    float haze = fbm(vec3(p.x * 1.2, latitude * 2.5 + uTime * 0.008, p.z * 1.2));
+    float subtleBand = sin(latitude * 6.0 + haze * 0.6) * 0.15;
+
+    vec3 deepCyan = vec3(0.18, 0.55, 0.62);
+    vec3 paleCyan = vec3(0.42, 0.78, 0.82);
+    vec3 iceCyan = vec3(0.68, 0.90, 0.92);
+
+    vec3 color = mix(deepCyan, paleCyan, smoothstep(-0.2, 0.2, subtleBand + haze * 0.2));
+    color = mix(color, iceCyan, smoothstep(0.15, 0.35, subtleBand));
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.2);
+    color += fresnel * vec3(0.2, 0.4, 0.45) * 0.7;
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`
