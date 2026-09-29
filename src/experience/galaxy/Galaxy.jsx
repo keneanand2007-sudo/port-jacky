@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber"
 import StarField from "./StarField"
 import Planet from "./Planet"
 import AsteroidField from "./AsteroidField"
+import Saturn from "./Saturn"
 import { isWebGLAvailable } from "../../utils/webgl"
 
 function Galaxy() {
@@ -112,6 +113,18 @@ function Galaxy() {
           exitX={-18}
           exitZ={-16}
           glowColor="#C9A876"
+          reduceMotion={reduceMotion}
+        />
+
+        <Saturn
+          sectionId="creative-identity-section"
+          radius={2.6}
+          startX={13}
+          startY={0.2}
+          startZ={-8}
+          exitX={-18}
+          exitZ={-16}
+          glowColor="#E8D2A0"
           reduceMotion={reduceMotion}
         />
       </Canvas>

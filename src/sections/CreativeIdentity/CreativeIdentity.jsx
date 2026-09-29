@@ -7,7 +7,7 @@ function CreativeIdentity() {
   useScrollReveal(containerRef)
 
   return (
-    <section
+    <section id="creative-identity-section"
       ref={containerRef}
       className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-24"
     >

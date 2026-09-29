@@ -413,3 +413,46 @@ export const jupiterFragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `
+export const saturnVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  void main() {
+    vPosition = position;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+export const saturnFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition);
+    float latitude = p.y;
+
+    float flow = fbm(vec3(p.x * 1.6, latitude * 4.0 + uTime * 0.012, p.z * 1.6));
+    float distortedLat = latitude + flow * 0.12;
+    float bands = sin(distortedLat * 16.0);
+
+    vec3 paleGold = vec3(0.92, 0.85, 0.68);
+    vec3 tan = vec3(0.80, 0.70, 0.52);
+    vec3 amber = vec3(0.70, 0.56, 0.38);
+    vec3 cream = vec3(0.96, 0.92, 0.80);
+
+    vec3 color = mix(tan, paleGold, smoothstep(-0.3, 0.3, bands));
+    color = mix(color, amber, smoothstep(0.35, 0.65, bands));
+    color = mix(color, cream, smoothstep(-0.9, -0.6, bands));
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+    color += fresnel * vec3(0.3, 0.25, 0.15) * 0.6;
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`
