@@ -373,25 +373,38 @@ export const jupiterFragmentShader = `
 
   void main() {
     vec3 p = normalize(vPosition);
-
     float latitude = p.y;
-    float bandNoise = fbm(vec3(p.x * 2.0, latitude * 6.0 + uTime * 0.02, p.z * 2.0));
-    float bands = sin(latitude * 14.0 + bandNoise * 1.5);
 
-    vec3 cream = vec3(0.85, 0.72, 0.55);
-    vec3 tan = vec3(0.68, 0.52, 0.36);
-    vec3 rust = vec3(0.58, 0.34, 0.22);
-    vec3 pale = vec3(0.92, 0.85, 0.72);
+    // Turbulent flow distortion so bands aren't perfectly straight.
+    float flow = fbm(vec3(p.x * 1.8, latitude * 3.0 + uTime * 0.015, p.z * 1.8));
+    float fineFlow = fbm(vec3(p.x * 4.0, latitude * 8.0 - uTime * 0.02, p.z * 4.0));
+    float distortedLat = latitude + flow * 0.18 + fineFlow * 0.05;
 
-    vec3 color = mix(tan, cream, smoothstep(-0.3, 0.3, bands));
-    color = mix(color, rust, smoothstep(0.35, 0.7, bands));
-    color = mix(color, pale, smoothstep(-0.9, -0.6, bands));
+    float bands = sin(distortedLat * 13.0);
+    float bandDetail = fbm(vec3(p.x * 3.0, distortedLat * 20.0 + uTime * 0.03, p.z * 3.0));
+    bands += bandDetail * 0.35;
 
-    vec2 spotCenter = vec2(0.35, -0.15);
+    vec3 cream = vec3(0.88, 0.75, 0.58);
+    vec3 tan = vec3(0.70, 0.53, 0.36);
+    vec3 rust = vec3(0.56, 0.32, 0.20);
+    vec3 darkBand = vec3(0.42, 0.24, 0.16);
+    vec3 pale = vec3(0.93, 0.87, 0.74);
+
+    vec3 color = mix(tan, cream, smoothstep(-0.2, 0.35, bands));
+    color = mix(color, rust, smoothstep(0.3, 0.6, bands));
+    color = mix(color, darkBand, smoothstep(0.55, 0.85, bands));
+    color = mix(color, pale, smoothstep(-0.95, -0.65, bands));
+
+    // Great Red Spot: elliptical, with internal swirl texture.
+    vec2 spotCenter = vec2(0.32, -0.12);
     vec2 posXY = vec2(p.x, latitude);
-    float spotDist = length((posXY - spotCenter) * vec2(1.0, 2.2));
-    float spot = smoothstep(0.22, 0.1, spotDist);
-    vec3 spotColor = vec3(0.55, 0.22, 0.14);
+    vec2 toSpot = (posXY - spotCenter) * vec2(1.0, 2.4);
+    float spotDist = length(toSpot);
+    float swirl = fbm(vec3(toSpot * 5.0, uTime * 0.05)) * 0.15;
+    float spot = smoothstep(0.24, 0.08, spotDist + swirl);
+
+    float spotCore = smoothstep(0.14, 0.02, spotDist);
+    vec3 spotColor = mix(vec3(0.62, 0.28, 0.16), vec3(0.48, 0.16, 0.10), spotCore);
     color = mix(color, spotColor, spot);
 
     float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
