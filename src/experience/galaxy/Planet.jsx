@@ -16,6 +16,8 @@ import {
   jupiterFragmentShader,
   uranusVertexShader,
   uranusFragmentShader,
+  neptuneVertexShader,
+  neptuneFragmentShader,
   glowVertexShader,
   glowFragmentShader,
 } from "./planetShaders"
@@ -74,6 +76,8 @@ function Planet({
       ? jupiterVertexShader
       : variant === "uranus"
       ? uranusVertexShader
+      : variant === "neptune"
+      ? neptuneVertexShader
       : rockyVertexShader
   const fragmentShader =
     variant === "sun"
@@ -88,6 +92,8 @@ function Planet({
       ? jupiterFragmentShader
       : variant === "uranus"
       ? uranusFragmentShader
+      : variant === "neptune"
+      ? neptuneFragmentShader
       : rockyFragmentShader
   const lightColor = variant === "sun" ? "#FFA35C" : "#9AAEDD"
 

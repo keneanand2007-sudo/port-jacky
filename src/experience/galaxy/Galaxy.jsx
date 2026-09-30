@@ -141,6 +141,19 @@ function Galaxy() {
           axialTilt={1.7}
           reduceMotion={reduceMotion}
         />
+
+        <Planet
+          sectionId="contact-section"
+          variant="neptune"
+          radius={2.2}
+          startX={10}
+          startY={0}
+          startZ={-6}
+          exitX={-14}
+          exitZ={-14}
+          glowColor="#3A5FCC"
+          reduceMotion={reduceMotion}
+        />
       </Canvas>
     </div>
   )

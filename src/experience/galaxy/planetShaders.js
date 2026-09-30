@@ -496,3 +496,51 @@ export const uranusFragmentShader = `
     gl_FragColor = vec4(color, uOpacity);
   }
 `
+export const neptuneVertexShader = `
+  uniform float uTime;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  void main() {
+    vPosition = position;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+export const neptuneFragmentShader = `
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  ${noiseGLSL}
+
+  void main() {
+    vec3 p = normalize(vPosition);
+    float latitude = p.y;
+
+    float flow = fbm(vec3(p.x * 1.6, latitude * 4.0 + uTime * 0.018, p.z * 1.6));
+    float storms = fbm(vec3(p.x * 3.2, latitude * 6.0 - uTime * 0.025, p.z * 3.2));
+    float distortedLat = latitude + flow * 0.15;
+    float bands = sin(distortedLat * 9.0) * 0.5 + storms * 0.3;
+
+    vec3 deepBlue = vec3(0.05, 0.12, 0.42);
+    vec3 midBlue = vec3(0.10, 0.24, 0.58);
+    vec3 brightBlue = vec3(0.22, 0.42, 0.78);
+    vec3 pale = vec3(0.45, 0.62, 0.88);
+
+    vec3 color = mix(deepBlue, midBlue, smoothstep(-0.3, 0.2, bands));
+    color = mix(color, brightBlue, smoothstep(0.15, 0.45, bands));
+    color = mix(color, pale, smoothstep(0.4, 0.65, bands));
+
+    float spotDist = length((vec2(p.x, latitude) - vec2(-0.3, 0.1)) * vec2(1.0, 1.8));
+    float darkSpot = smoothstep(0.2, 0.08, spotDist);
+    color = mix(color, vec3(0.03, 0.08, 0.28), darkSpot);
+
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+    color += fresnel * vec3(0.15, 0.25, 0.5) * 0.8;
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`
