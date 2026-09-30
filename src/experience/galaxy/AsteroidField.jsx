@@ -1,6 +1,7 @@
-import { useRef, useMemo } from "react"
+import { useRef, useMemo, useState } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
+import { projects } from "../../data/projects"
 
 function getRawChapterProgress(sectionId) {
   const el = document.getElementById(sectionId)
@@ -11,22 +12,61 @@ function getRawChapterProgress(sectionId) {
   return (window.scrollY - sectionTop) / vh
 }
 
-function Rock({ position, scale, spinSpeed }) {
+function Rock({ position, scale, spinSpeed, project, index }) {
   const ref = useRef(null)
+  const [hovered, setHovered] = useState(false)
 
   useFrame((state, delta) => {
     if (!ref.current) return
     ref.current.rotation.x += delta * spinSpeed * 0.6
     ref.current.rotation.y += delta * spinSpeed
+
+    const targetScale = hovered ? scale * 1.35 : scale
+    ref.current.scale.lerp(
+      new THREE.Vector3(targetScale, targetScale, targetScale),
+      0.15
+    )
   })
 
+  const isInteractive = Boolean(project)
+
+  function handlePointerOver(e) {
+    if (!isInteractive) return
+    e.stopPropagation()
+    setHovered(true)
+    document.body.style.cursor = "pointer"
+  }
+
+  function handlePointerOut(e) {
+    if (!isInteractive) return
+    e.stopPropagation()
+    setHovered(false)
+    document.body.style.cursor = "auto"
+  }
+
+  function handleClick(e) {
+    if (!isInteractive) return
+    e.stopPropagation()
+    const card = document.getElementById(`project-card-${index}`)
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+
   return (
-    <mesh ref={ref} position={position} scale={scale}>
+    <mesh
+      ref={ref}
+      position={position}
+      scale={scale}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+      onClick={handleClick}
+    >
       <icosahedronGeometry args={[1, 0]} />
       <meshStandardMaterial
-        color="#6b625a"
-        roughness={0.95}
-        metalness={0.05}
+        color={hovered && isInteractive ? "#c9a876" : "#6b625a"}
+        roughness={0.9}
+        metalness={0.08}
+        emissive={hovered && isInteractive ? "#5a4326" : "#000000"}
+        emissiveIntensity={hovered && isInteractive ? 0.4 : 0}
         flatShading
       />
     </mesh>
@@ -46,7 +86,25 @@ function AsteroidField({
 
   const rocks = useMemo(() => {
     const list = []
-    for (let i = 0; i < count; i++) {
+
+    // One interactive rock per real project, placed toward the front.
+    projects.forEach((project, i) => {
+      list.push({
+        position: [
+          (Math.random() - 0.5) * 6,
+          (Math.random() - 0.5) * 3,
+          1 + Math.random() * 2,
+        ],
+        scale: 0.55 + Math.random() * 0.25,
+        spinSpeed: 0.1 + Math.random() * 0.2,
+        project,
+        index: i,
+      })
+    })
+
+    // Decorative filler rocks fill out the rest of the field.
+    const fillerCount = Math.max(0, count - projects.length)
+    for (let i = 0; i < fillerCount; i++) {
       list.push({
         position: [
           (Math.random() - 0.5) * 9,
@@ -55,8 +113,11 @@ function AsteroidField({
         ],
         scale: 0.25 + Math.random() * 0.55,
         spinSpeed: 0.15 + Math.random() * 0.4,
+        project: null,
+        index: null,
       })
     }
+
     return list
   }, [count])
 

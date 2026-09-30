@@ -24,6 +24,7 @@ function Projects() {
           {projects.map((project, i) => (
             <div
               key={project.title}
+              id={`project-card-${i}`}
               className="reveal text-left border border-white/10 rounded-lg p-6 hover:border-white/25 transition-colors"
             >
               <p className="font-body text-xs tracking-widest uppercase text-text-muted">
