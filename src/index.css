@@ -17,3 +17,9 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-body);
 }
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
