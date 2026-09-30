@@ -1,5 +1,5 @@
+import { lazy, Suspense } from "react"
 import SmoothScroll from "./experience/scroll/SmoothScroll"
-import Galaxy from "./experience/galaxy/Galaxy"
 import Hero from "./sections/Hero/Hero"
 import About from "./sections/About/About"
 import Skills from "./sections/Skills/Skills"
@@ -13,10 +13,14 @@ import Contact from "./sections/Contact/Contact"
 import DeepSpace from "./sections/DeepSpace/DeepSpace"
 import Footer from "./components/Footer/Footer"
 
+const Galaxy = lazy(() => import("./experience/galaxy/Galaxy"))
+
 function App() {
   return (
     <SmoothScroll>
-      <Galaxy />
+      <Suspense fallback={null}>
+        <Galaxy />
+      </Suspense>
       <main>
         <Hero />
         <About />

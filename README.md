@@ -151,27 +151,27 @@ needs updating to mention GSAP/Three.js/Lenis now that they're live.
 * ✅ Phase 02 — Core portfolio content
 * ✅ Phase 03 — Smooth scrolling (Lenis, synced to GSAP ticker)
 * ✅ Phase 04 — Cinematic animation (GSAP ScrollTrigger reveal on all sections via `useScrollReveal`)
-* 🔶 Phase 05 — Galaxy environment (Three.js/R3F) — in progress, see §14
-* 🔶 Phase 06 — Planet system — in progress: Sun, Mercury, Venus done; Earth/Mars/Jupiter/Saturn/Uranus/Neptune not yet built
-* ⬜ Phase 07 — Interactive projects (asteroid field)
-* ⬜ Phase 08 — Performance (bundle is 1.4MB — Three.js/R3F/drei not yet code-split; known, deferred)
-* ⬜ Phase 09 — Accessibility
+* ✅ Phase 05 — Galaxy environment (Three.js/R3F) — starfield + fixed full-screen Canvas behind all content, see §14
+* ✅ Phase 06 — Planet system — ALL 10 chapters have their own 3D visual (see chapter table below); Asteroid Belt uses a simple scattered-rocks placeholder (per Jack's request) rather than a full interactive field — that upgrade is deferred to Phase 07
+* ⬜ Phase 07 — Interactive projects (asteroid field becomes a real discoverable project field, per PRD §16-17 — not started; current asteroid field is visual-only, no click/hover interaction yet)
+* ⬜ Phase 08 — Performance (bundle is ~1.41MB — Three.js/R3F/drei not yet code-split; known, deferred; also no per-device quality tiers yet)
+* ⬜ Phase 09 — Accessibility (reduced-motion is respected by every Planet/AsteroidField/Saturn component already, but no keyboard/focus/ARIA pass done yet on the galaxy layer specifically)
 * ⬜ Phase 10 — Production
 
-### Current live chapter order (App.jsx)
+### Current live chapter order (App.jsx) — all now have a matching 3D visual
 
 ```
-Hero (Sun)              ← has 3D planet
-About (Mercury)          ← has 3D planet
-Skills (Venus)           ← has 3D planet
-Education (Earth)        ← no 3D planet yet
-Proof (Mars)             ← no 3D planet yet
-Projects (Asteroid Belt) ← no 3D planet yet
-Experience (Jupiter)     ← no 3D planet yet
-CreativeIdentity (Saturn)← no 3D planet yet
-Experiments (Uranus)     ← no 3D planet yet
-Contact (Neptune)        ← no 3D planet yet
-DeepSpace
+Hero (Sun)                 ← Planet variant="sun"      (bigger, radius 3.2)
+About (Mercury)             ← Planet variant="rocky"
+Skills (Venus)               ← Planet variant="venus"
+Education (Earth)            ← Planet variant="earth"
+Proof (Mars)                  ← Planet variant="mars"
+Projects (Asteroid Belt)       ← AsteroidField (scattered rocks placeholder, no interaction yet)
+Experience (Jupiter)            ← Planet variant="jupiter" (bands + Great Red Spot)
+CreativeIdentity (Saturn)         ← Saturn (separate component — has rings)
+Experiments (Uranus)               ← Planet variant="uranus" (axialTilt={1.7}, sideways)
+Contact (Neptune)                   ← Planet variant="neptune" (dark storm spot)
+DeepSpace                             ← no 3D visual (intentional — just stars)
 Footer
 ```
 
@@ -286,6 +286,34 @@ src/
 8. Vite's HMR can miss changes to GLSL template-string shaders — a hard
    reload (click the address bar, Enter) is more reliable than a normal
    refresh when a shader edit doesn't seem to apply.
+9. **A `t` value already clamped to [0,1] cannot tell "chapter hasn't
+   arrived yet" apart from "chapter just started"** — both read as
+   `t = 0`. This caused every later planet to render at its start
+   position from the very first page load (all visible at once, right
+   side of the Hero) even though the opacity math was otherwise
+   correct. Fix: compute an **unclamped/raw** progress value first
+   (can be negative or >1), gate a hard `visible = false` on
+   `raw > -0.05 && raw < 1.05`, and only clamp to derive the animated
+   `t` once known to be inside the active window. This is the final
+   `getRawChapterProgress` pattern described in §14 — always use it
+   (not a pre-clamped version) for any future chapter-linked object.
+10. **`sed` pattern-matching on JSX/config files is whitespace-
+    fragile** — a pattern like `s/        </Canvas>/.../ ` will
+    silently no-op (zero replacements, no error) if the actual file
+    has slightly different indentation than assumed, e.g. after a
+    prior manual edit. `grep` the target line first to confirm exact
+    spacing before trusting a multi-line `sed` insert; when in doubt,
+    it's more reliable to `cat -n` the whole file and do a full
+    `cat > file <<'EOF' ... EOF` rewrite than to chase an indentation
+    mismatch.
+11. **`cat >>` (append) run twice on the same shader block produces a
+    duplicate `export const` and breaks the Vite build** ("Duplicated
+    export"). This happened once with `saturnVertexShader`/
+    `saturnFragmentShader`. Before appending a new shader block, it's
+    worth a quick `grep -n "export const <name>"` to confirm it isn't
+    already there; if a duplicate does happen, `wc -l` the file, find
+    the second block's start/end line numbers, and `sed -i
+    '<start>,<end>d'` to remove just the duplicate.
 
 ---
 
@@ -298,46 +326,75 @@ behind all content). One `<Planet sectionId="..." variant="..." .../>`
 per chapter in `Galaxy.jsx`; each planet is invisible outside its own
 chapter's scroll window (no overlap, one planet on screen at a time).
 
+**STATUS: All 10 chapters are done.** Nothing left to add on this
+system unless the design changes (e.g. upgrading the asteroid field to
+be interactive is Phase 07, a separate effort — see below).
+
 **Props per Planet:** `sectionId` (DOM id of the section it's synced
-to), `variant` (`"sun"` | `"venus"` | `"rocky"` — each maps to a shader
-pair in `planetShaders.js`), `radius`, `startX/Y/Z` (enter position,
-right side), `exitX/Z` (exit position, off-screen left), `glowColor`,
-`reduceMotion`.
+to), `variant` (`"sun"` | `"rocky"` | `"venus"` | `"earth"` | `"mars"`
+| `"jupiter"` | `"uranus"` | `"neptune"` — each maps to a shader pair
+in `planetShaders.js`), `radius`, `startX/Y/Z` (enter position, right
+side), `exitX/Z` (exit position, off-screen left), `glowColor`,
+`axialTilt` (radians, default 0 — only Uranus uses a non-zero value,
+`1.7`, for its sideways tilt), `reduceMotion`. Saturn is NOT a variant
+of `Planet` — it's its own component (`Saturn.jsx`) because it needs a
+ring mesh in addition to the sphere; same props pattern minus `variant`.
+`AsteroidField.jsx` (used only for Projects/asteroid belt) is also its
+own component — an instanced cluster of small rotating icosahedrons
+instead of one sphere, same `sectionId`-driven enter/exit motion.
 
-**Shaders** (`src/experience/galaxy/planetShaders.js`) — shared
-`noiseGLSL` (simplex noise + fbm), then per-variant vertex+fragment
-pairs: `sunVertexShader`/`sunFragmentShader` (turbulent flare
-displacement, orange/red/yellow/hot color ramp), `rockyVertexShader`/
-`rockyFragmentShader` (crater displacement, navy/slate/copper/highlight
-ramp — used for Mercury), `venusVertexShader`/`venusFragmentShader`
-(smooth swirling clouds, gold/amber/cream/pale ramp). Each fragment
-shader takes a `uOpacity` uniform and uses it directly in
-`gl_FragColor` (see gotcha #4 above — this is mandatory, not optional).
-A shared `glowVertexShader`/`glowFragmentShader` (single soft
-fresnel-based halo, additive blending, back-side) wraps every planet —
-kept to one shell, not multiple concentric rings (multiple rings looked
-like a "donut" and were removed).
+**Shaders** (`src/experience/galaxy/planetShaders.js`, ~460 lines) —
+shared `noiseGLSL` (simplex noise + fbm) at the top, then one
+vertex+fragment pair per variant, each following the same shape:
+displacement/detail in the vertex shader, a `mix()` color ramp plus a
+`uOpacity` uniform used directly in `gl_FragColor` in the fragment
+shader (mandatory — see gotcha #4). Color direction per variant: Sun
+(turbulent flares, orange→hot white), rocky/Mercury (craters, navy/
+copper), Venus (smooth swirling clouds, gold/cream), Earth (large-scale
+landmass shape + separate finer detail noise, ocean/coast/land/highland
+ramp, animated cloud layer via `fbm` offset by `uTime`), Mars (craters,
+rust/dusty-tan), Jupiter (`sin()`-based horizontal bands distorted by
+`fbm` flow noise for a wavy/turbulent look, plus a separate elliptical
+`smoothstep`-masked "Great Red Spot" with its own internal swirl noise),
+Saturn (similar banding approach to Jupiter but paler/gold, no spot;
+ring is a **separate** `ringGeometry` mesh with its own simple
+shader — ring UV-based banding is a stylized approximation, not
+physically accurate, which is fine per RULE.md §81), Uranus (very
+subtle/flat bands — real Uranus is visually bland — pale cyan/ice
+ramp, tilted via the whole group's `axialTilt` rather than anything
+shader-side), Neptune (wavier bands than Jupiter/Saturn plus a
+`smoothstep`-masked dark storm spot, deep-to-pale blue ramp). A shared
+`glowVertexShader`/`glowFragmentShader` (single soft fresnel-based
+halo, additive blending, back-side) wraps every planet and Saturn —
+kept to exactly one shell, not multiple concentric rings (multiple
+rings visually read as a "donut" and were removed early on).
 
-**Timing:** `getChapterProgress(sectionId)` inside `Planet.jsx` reads
-`el.offsetTop` directly from the DOM every frame (see gotcha #5) —
-no external hook, no React state for this value. `t` goes 0→1 across
-exactly one viewport-height of scrolling once the section's top hits
-the viewport top. Position lerps from `start` to `exit` using this `t`
-(smoothstepped); opacity is 1 from t=0 until t≈0.55, then fades to 0 by
-t≈0.9 (see gotcha #6).
+**Timing (final, working formula):** Inside `Planet.jsx`,
+`getRawChapterProgress(sectionId)` returns `(scrollY - el.offsetTop) / vh`
+**unclamped** (can be negative before the chapter, >1 after). Each
+frame: `isActive = raw > -0.05 && raw < 1.05`, and
+`groupRef.current.visible = isActive` — this hard Three.js-level
+visibility toggle is what actually guarantees only one planet renders
+at a time (see gotcha #6b below; relying on opacity alone was not
+enough). Only when active does it compute `t = clamp(raw, 0, 1)`,
+smoothstep-ease it, lerp position from `start` to `exit`, and set
+opacity via `fade = max(0, 1 - max(0, t - 0.65) / 0.35)` — i.e. fully
+opaque from the instant the chapter starts (t=0) until t≈0.65, then
+fades to 0 by t≈1.0. `AsteroidField.jsx` and `Saturn.jsx` duplicate
+this same `getRawChapterProgress` + visibility-toggle logic locally
+(small code duplication, intentionally not extracted to keep each file
+self-contained given how many times this logic needed live debugging).
 
-**Sections wired with an `id`** so far: `hero-section` (Sun),
-`about-section` (Mercury), `skills-section` (Venus). Remaining sections
-(Education, Proof, Projects, Experience, CreativeIdentity, Experiments,
-Contact, DeepSpace) do NOT have ids yet and have no planet — next
-planets to add, in order: Earth (Education), Mars (Proof), then either
-skip Projects (per PRD, asteroid belt is its own interactive system,
-Phase 07) or give it a placeholder, Jupiter (Experience), Saturn
-(CreativeIdentity — likely wants a ring system, not built yet), Uranus
-(Experiments), Neptune (Contact).
+**Sections wired with an `id`** (all done): `hero-section` (Sun),
+`about-section` (Mercury), `skills-section` (Venus),
+`education-section` (Earth), `proof-section` (Mars),
+`projects-section` (AsteroidField), `experience-section` (Jupiter),
+`creative-identity-section` (Saturn), `experiments-section` (Uranus),
+`contact-section` (Neptune).
 
-**To add a new planet:** (1) add `id="X-section"` to that section's
-outer `<section>` tag, (2) if it needs a new visual style, add a new
+**To add a new planet** (if ever needed again — e.g. a variant
+restyle): (1) add `id="X-section"` to that section's outer `<section>`
+tag, (2) if it needs a new visual style, add a new
 vertex/fragment shader pair to `planetShaders.js` following the
 existing pattern (displacement in vertex, color ramp + `uOpacity` in
 fragment) and wire the new `variant` string into `Planet.jsx`'s two
