@@ -1,13 +1,17 @@
 // Add certifications, hackathons, or learning milestones here.
 // Each entry needs: title, issuer, year, url (verify link, leave "" if none).
-// Example:
-// {
-//   title: "Python for Everybody",
-//   issuer: "Coursera",
-//   year: "2026",
-//   url: "https://coursera.org/verify/xxxxx",
-// },
 
 export const proof = [
-  // add entries here
+  {
+    title: "Rising India Hackathon 1.0",
+    issuer: "Nagpur Institute of Technology, Nagpur",
+    year: "",
+    url: "",
+  },
+  {
+    title: "Hackathon Participant",
+    issuer: "Yeshwantrao Chavan College of Engineering (YCCE), Nagpur",
+    year: "",
+    url: "",
+  },
 ]
